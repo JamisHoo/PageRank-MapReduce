@@ -50,9 +50,9 @@ inline void output_float(const float x) {
 }
 
 inline void input(const char* line, const size_t line_length) {
-    const char* header = "<page><title>";
+    const char* header = "<page>    <title>";
     const char* tailer = "</title>";
-    const size_t header_length = 13;
+    const size_t header_length = 17;
     const size_t tailer_length = 8;
 
     if (line_length < header_length + tailer_length) return;
@@ -86,17 +86,18 @@ inline void input(const char* line, const size_t line_length) {
 
     while (i < line_length) {
         for (; i < line_length - 1; ++i) 
-            if (line[i] == '[' && line[i + 1] != '[' && line[i - 1] != '[') break;
+            if (line[i] == '[' && line[i + 1] == '[') break;
         size_t j;
-        for (j = i + 1; j < line_length; ++j)
-            if (line[j] == ']') {
+        for (j = i + 2; j < line_length - 1; ++j)
+            if (line[j] == ']' && line[j + 1] == ']') {
                 // [i, j] is a url
-                uint32_t url_no = find_no(std::string(line + i + 1, j - i - 1));
+                uint32_t url_no = find_no(std::string(line + i + 2, j - i - 2));
                 output_uint32(url_no);    
-                i = j + 1;
+                i = j + 2;
                 break;
             }
-        if (j == line_length) break;
+
+        if (j >= line_length - 1) break;
     }
     bin_input.put('\n');
 }
@@ -115,7 +116,7 @@ int main(int argc, char** argv) {
 
     std::string line;
     while (getline(fin, line)) {
-        if (counter % 8192 == 0)
+        if (counter % 8 == 0)
             std::cout << counter++ << std::endl;
         input(line.data(), line.length());
     }
