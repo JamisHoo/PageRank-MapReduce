@@ -17,8 +17,6 @@
 #include <vector>
 #include <unordered_map>
 
-
-
 int main(int argc, char** argv) {
     std::ios_base::sync_with_stdio(false);
 
@@ -50,6 +48,5 @@ int main(int argc, char** argv) {
                 }
         }
     }
-
 }
 
