@@ -122,8 +122,9 @@ int main(int argc, char** argv) {
 
     std::string line;
     while (getline(fin, line)) {
-        if (counter % 8 == 0)
-            std::cout << counter++ << std::endl;
+        counter++;
+        if (counter % 8192 == 0)
+            std::cout << counter << std::endl;
         input(line.data(), line.length());
     }
 
