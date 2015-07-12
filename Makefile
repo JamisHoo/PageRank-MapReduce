@@ -1,5 +1,5 @@
 vpath %.cc src
-CXXFLAGS += -std=c++11 -Wextra
+CXXFLAGS += -std=c++11 -Wextra -O2
 
 HADOOP_SRC_DIR = ./include/
 
