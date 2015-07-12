@@ -13,6 +13,7 @@
  *  Description: mapper and reducer functions running on MapReduce
  *****************************************************************************/
 #include <iostream>
+#include <cstring>
 #include <cassert>
 
 #include "hadoop/Pipes.hh"
