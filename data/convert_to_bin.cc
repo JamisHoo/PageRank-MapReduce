@@ -99,6 +99,12 @@ inline void input(const char* line, const size_t line_length) {
 
         if (j >= line_length - 1) break;
     }
+    bin_input.put('A');
+    bin_input.put('B');
+    bin_input.put('C');
+    bin_input.put('D');
+    bin_input.put('E');
+    bin_input.put('F');
     bin_input.put('\n');
 }
 
