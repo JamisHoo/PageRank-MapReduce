@@ -13,6 +13,7 @@
  *  Description: mapper and reducer functions running on MapReduce
  *****************************************************************************/
 #include <iostream>
+#include <cassert>
 
 #include "hadoop/Pipes.hh"
 #include "hadoop/TemplateFactory.hh"
@@ -32,9 +33,13 @@ uint32_t network_to_host(const void* from) {
            uint32_t(network[3]) <<  0;
 }
 
+// assert url_list_header.length() > 4 Bytes
+const std::string url_list_header = "     ";
+const std::string delimiter = "ABCDEF";
+
 /* Mapper input format:
-   Key = URL
-   Value = (PR, URL_list)
+   Key = ...
+   Value = URL\t(PR, URL_list)
    PR is 4-Byte floating point defined in IEEE 754
    RUL is a 4-Byte unsigned integer in big-endian
 */
@@ -61,27 +66,28 @@ public:
         offset += sizeof(pr);
 
         // construct emit key
-        std::string emit_key(sizeof(uint32_t), 0);
+        std::string emit_key(sizeof(URL), 0);
         host_to_network(URL, emit_key);
 
         // emit url_list
-        context.emit(emit_key, std::string(input_value.data() + offset, input_value.length() - offset));
+        context.emit(emit_key, url_list_header + std::string(input_value.data() + offset, input_value.length() - offset));
 
         size_t url_list_size = (input_value.length() - offset) / sizeof(uint32_t);
 
-        std::string emit_value(sizeof(float), 0);
+        // compute new pr
+        float new_pr = pr / url_list_size;
+        
+        // construct emit value
+        std::string emit_value(sizeof(new_pr), 0);
+        memcpy(&emit_value[0], &new_pr, sizeof(new_pr));
 
         // URL list
         while (offset + sizeof(uint32_t) <= input_value.length()) {
-            
-            // url
-            uint32_t url = network_to_host(input_value.data() + offset);
-            offset += sizeof(url);
-            
-            // compute new pr
-            float new_pr = pr / url_list_size;
-
-            memcpy(&emit_value[0], &new_pr, sizeof(new_pr));
+            // construct emit key (url)
+            emit_key[0] = input_value[offset++];
+            emit_key[1] = input_value[offset++];
+            emit_key[2] = input_value[offset++];
+            emit_key[3] = input_value[offset++];
 
             context.emit(emit_key, emit_value);
         }
@@ -91,7 +97,7 @@ public:
 /* Reducer input format:
    Key = URL
    Value = 4-Byte floating point defined in IEEE 754
-        or URL_list
+        or url list header + URL_list
    RUL is a 4-Byte unsigned integer in big-endian
 */
 class PageRankReducer: public HadoopPipes::Reducer {
@@ -99,7 +105,7 @@ public:
     PageRankReducer(HadoopPipes::TaskContext& /* context */) { }
     
     void reduce(HadoopPipes::ReduceContext& context) {
-        constexpr float d = 0.85;
+        constexpr float d = 0.85f;
 
         uint32_t URL = network_to_host(context.getInputKey().data());
 
@@ -112,22 +118,25 @@ public:
             input_value = context.getInputValue();
 
             // url list
-            if (input_value.length() > 4) 
-                url_list = input_value;
-            else 
+            if (input_value.length() >= url_list_header.length()) 
+                url_list = input_value.substr(url_list_header.length());
+            else {
+                assert(input_value.length() == 4);
                 pr += *(float*)(input_value.data());
+            }
         }
 
         pr = 1.0f - d + d * pr;
 
         // construct emit key
-        std::string emit_key;
+        std::string emit_key(sizeof(URL), 0);
         host_to_network(URL, emit_key);
 
         // and emit value
         std::string emit_value(sizeof(pr), 0);
-        memcpy(&emit_value[0], &pr, sizeof(pr));
         emit_value += url_list;
+        emit_value += delimiter;
+        memcpy(&emit_value[0], &pr, sizeof(pr));
 
         context.emit(emit_key, emit_value);
     }
