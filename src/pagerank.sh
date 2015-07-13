@@ -1,8 +1,8 @@
 #!/bin/sh
 
-INPUT=input2
-TMPDIR=pagerank_tmp
-OUTPUT=output
+INPUT=jamis_pagerank_input
+TMPDIR=jamis_pagerank_tmp
+OUTPUT=jamis_pagerank_output
 KROUNDS=10
 
 
@@ -26,5 +26,5 @@ for ((i=0;i<$KROUNDS;++i)); do
     
     done
 
-bin/mapred pipes -conf conf0.xml \
+bin/mapred pipes -conf conf.xml \
 -input ${TMPDIR}$(($KROUNDS - 1)) -output $OUTPUT -program bin/pagerank_resultsort
