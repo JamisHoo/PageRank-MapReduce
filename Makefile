@@ -11,4 +11,4 @@ pagerank_resultsort: pagerank_result_sort.cc
 	$(CXX) $(CXXFLAGS) $? -o$@ -I $(HADOOP_SRC_DIR) $(HADOOP_SRC_DIR)/hadoop/*.cc -lcrypto -lpthread
 
 clean:
-	$(RM) main
+	$(RM) pagerank_iter pagerank_resultsort
